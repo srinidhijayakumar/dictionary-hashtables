@@ -2,12 +2,13 @@
 triple:          'arm64-apple-darwin'
 binary-path:     '/Users/Srinidhi_1/Desktop/dictionary-hashtables/dsa'
 relocations:
-  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _hash_function, symObjAddr: 0x0, symBinAddr: 0x100003878, symSize: 0x70 }
-  - { offsetInCU: 0xF0, offset: 0xF0, size: 0x8, addend: 0x0, symName: _hash_function, symObjAddr: 0x0, symBinAddr: 0x100003878, symSize: 0x70 }
-  - { offsetInCU: 0x126, offset: 0x126, size: 0x8, addend: 0x0, symName: _find_entry, symObjAddr: 0x70, symBinAddr: 0x1000038E8, symSize: 0x80 }
-  - { offsetInCU: 0x15C, offset: 0x15C, size: 0x8, addend: 0x0, symName: _create_dictionary, symObjAddr: 0xF0, symBinAddr: 0x100003968, symSize: 0x9C }
-  - { offsetInCU: 0x1A0, offset: 0x1A0, size: 0x8, addend: 0x0, symName: _free_dictionary, symObjAddr: 0x18C, symBinAddr: 0x100003A04, symSize: 0xF8 }
-  - { offsetInCU: 0x242, offset: 0x242, size: 0x8, addend: 0x0, symName: _insert_with_meaning, symObjAddr: 0x284, symBinAddr: 0x100003AFC, symSize: 0x1A8 }
-  - { offsetInCU: 0x2E4, offset: 0x2E4, size: 0x8, addend: 0x0, symName: _display_with_meaning, symObjAddr: 0x42C, symBinAddr: 0x100003CA4, symSize: 0xFC }
-  - { offsetInCU: 0x35C, offset: 0x35C, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x528, symBinAddr: 0x100003DA0, symSize: 0x88 }
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _create_dictionary, symObjAddr: 0x0, symBinAddr: 0x1000037B8, symSize: 0x9C }
+  - { offsetInCU: 0x100, offset: 0x100, size: 0x8, addend: 0x0, symName: _create_dictionary, symObjAddr: 0x0, symBinAddr: 0x1000037B8, symSize: 0x9C }
+  - { offsetInCU: 0x144, offset: 0x144, size: 0x8, addend: 0x0, symName: _hash_function, symObjAddr: 0x9C, symBinAddr: 0x100003854, symSize: 0x70 }
+  - { offsetInCU: 0x17A, offset: 0x17A, size: 0x8, addend: 0x0, symName: _find_entry, symObjAddr: 0x10C, symBinAddr: 0x1000038C4, symSize: 0x80 }
+  - { offsetInCU: 0x1B0, offset: 0x1B0, size: 0x8, addend: 0x0, symName: _insert_with_meaning, symObjAddr: 0x18C, symBinAddr: 0x100003944, symSize: 0x1B0 }
+  - { offsetInCU: 0x252, offset: 0x252, size: 0x8, addend: 0x0, symName: _display, symObjAddr: 0x33C, symBinAddr: 0x100003AF4, symSize: 0xF8 }
+  - { offsetInCU: 0x2CA, offset: 0x2CA, size: 0x8, addend: 0x0, symName: _free_dictionary, symObjAddr: 0x434, symBinAddr: 0x100003BEC, symSize: 0xEC }
+  - { offsetInCU: 0x36C, offset: 0x36C, size: 0x8, addend: 0x0, symName: _load_dataset, symObjAddr: 0x520, symBinAddr: 0x100003CD8, symSize: 0x104 }
+  - { offsetInCU: 0x3C9, offset: 0x3C9, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x624, symBinAddr: 0x100003DDC, symSize: 0x50 }
 ...
