@@ -3,16 +3,16 @@
 #include <string.h>
 
 #define TABLE_SIZE 100
-#define MAX_WORD_LENGTH 100
-#define MAX_MEANING_LENGTH 500
 
 typedef struct Meaning {
-    char *definition;
+    char tamil_definition[500];
+    char english_definition[500];
     struct Meaning *next;
 } Meaning;
 
 typedef struct DictEntry {
-    char *word;
+    char *tamil_word;
+    char *english_word;
     Meaning *meanings;
     struct DictEntry *next;
 } DictEntry;
@@ -23,10 +23,10 @@ typedef struct Dictionary {
 
 // Function prototypes
 Dictionary *create_dictionary();
-unsigned int hash_function(const char *word, unsigned int table_size);
-DictEntry *find_entry(DictEntry *entry, const char *word);
-void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning);
-void search_and_display(Dictionary *dict, const char *word);
+unsigned int hash_function(const char *word);
+DictEntry *find_entry(DictEntry *entry, const char *word, int lang);
+void insert_with_meaning(Dictionary *dict, const char *tamil_word, const char *english_word, const char *tamil_meaning, const char *english_meaning);
+void search_and_display(Dictionary *dict);
 void display(Dictionary *dict);
 void free_dictionary(Dictionary *dict);
 void load_dataset(Dictionary *dict, const char *filename);
@@ -40,7 +40,8 @@ int main() {
     load_dataset(dict, "dataset.txt");
 
     int choice;
-    char word[MAX_WORD_LENGTH];
+    char word[100];
+    int lang_choice;
 
     do {
         printf("\nMenu:\n");
@@ -53,37 +54,49 @@ int main() {
 
         switch (choice) {
             case 1:
+                printf("Choose language for search:\n");
+                printf("1. Tamil\n");
+                printf("2. English\n");
+                printf("Enter your choice: ");
+                scanf("%d", &lang_choice);
+
                 printf("Enter the word to search: ");
                 scanf("%s", word);
-                search_and_display(dict, word);
+
+                search_and_display(dict, word, lang_choice);
                 break;
 
             case 2: {
+                printf("Choose language for adding a word:\n");
+                printf("1. Tamil\n");
+                printf("2. English\n");
+                printf("Enter your choice: ");
+                scanf("%d", &lang_choice);
+
                 printf("Enter the word to add: ");
                 scanf("%s", word);
 
                 // Check if the word already exists
-                DictEntry *entry = find_entry(dict->table[hash_function(word, TABLE_SIZE)], word);
+                DictEntry *entry = find_entry(dict->table[hash_function(word)], word, lang_choice);
                 if (entry != NULL) {
                     printf("Word already exists in the dictionary.\n");
                     break;
                 }
 
                 // Add new word and meaning
-                char new_meaning[MAX_MEANING_LENGTH];
-                printf("Enter the meaning for %s: ", word);
+                char new_tamil_meaning[500];
+                char new_english_meaning[500];
+
+                printf("Enter the meaning in Tamil: ");
                 getchar();  // Consume the newline character left by the previous scanf
+                fgets(new_tamil_meaning, sizeof(new_tamil_meaning), stdin);
+                new_tamil_meaning[strcspn(new_tamil_meaning, "\n")] = '\0';  // Remove trailing newline
 
-                // Allocate memory for the meaning
-                char *meaning = (char *)malloc(MAX_MEANING_LENGTH);
-                if (!meaning) {
-                    fprintf(stderr, "Memory allocation error for meaning.\n");
-                    exit(EXIT_FAILURE);
-                }
+                printf("Enter the meaning in English: ");
+                fgets(new_english_meaning, sizeof(new_english_meaning), stdin);
+                new_english_meaning[strcspn(new_english_meaning, "\n")] = '\0';  // Remove trailing newline
 
-                fgets(meaning, MAX_MEANING_LENGTH, stdin);
-                meaning[strcspn(meaning, "\n")] = '\0';  // Remove trailing newline
-                insert_with_meaning(dict, word, meaning);
+                insert_with_meaning(dict, word, word, new_tamil_meaning, new_english_meaning);
                 printf("Word added successfully.\n");
                 break;
             }
@@ -111,7 +124,7 @@ int main() {
 
 // Function to compare two words for sorting
 int compare_words(const void *a, const void *b) {
-    return strcmp((*(DictEntry **)a)->word, (*(DictEntry **)b)->word);
+    return strcmp((*(DictEntry **)a)->tamil_word, (*(DictEntry **)b)->tamil_word);
 }
 
 Dictionary *create_dictionary() {
@@ -128,18 +141,20 @@ Dictionary *create_dictionary() {
     return dict;
 }
 
-unsigned int hash_function(const char *word, unsigned int table_size) {
+unsigned int hash_function(const char *word) {
     unsigned int hash = 0;
     while (*word) {
         hash = (hash * 31) + *word;
         word++;
     }
-    return hash % table_size;
+    return hash % TABLE_SIZE;
 }
 
-DictEntry *find_entry(DictEntry *entry, const char *word) {
+DictEntry *find_entry(DictEntry *entry, const char *word, int lang) {
     while (entry != NULL) {
-        if (strcmp(entry->word, word) == 0) {
+        if (lang == 1 && strcmp(entry->tamil_word, word) == 0) {
+            return entry;
+        } else if (lang == 2 && strcmp(entry->english_word, word) == 0) {
             return entry;
         }
         entry = entry->next;
@@ -147,22 +162,29 @@ DictEntry *find_entry(DictEntry *entry, const char *word) {
     return NULL;
 }
 
-void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning) {
-    unsigned int index = hash_function(word, TABLE_SIZE);
+void insert_with_meaning(Dictionary *dict, const char *tamil_word, const char *english_word, const char *tamil_meaning, const char *english_meaning) {
+    unsigned int index = hash_function(tamil_word);
 
     DictEntry *entry = dict->table[index];
-    DictEntry *found_entry = find_entry(entry, word);
+    DictEntry *found_entry = find_entry(entry, tamil_word, 1);
 
     if (found_entry != NULL) {
         // Word already exists, add meaning
-        Meaning *new_meaning = (Meaning *)malloc(sizeof(Meaning));
-        if (!new_meaning) {
+        Meaning *new_tamil_meaning = (Meaning *)malloc(sizeof(Meaning));
+        Meaning *new_english_meaning = (Meaning *)malloc(sizeof(Meaning));
+
+        if (!new_tamil_meaning || !new_english_meaning) {
             fprintf(stderr, "Memory allocation error for meaning.\n");
             exit(EXIT_FAILURE);
         }
-        new_meaning->definition = strdup(meaning);
-        new_meaning->next = found_entry->meanings;
-        found_entry->meanings = new_meaning;
+
+        strcpy(new_tamil_meaning->tamil_definition, tamil_meaning);
+        new_tamil_meaning->next = found_entry->meanings;
+        found_entry->meanings = new_tamil_meaning;
+
+        strcpy(new_english_meaning->english_definition, english_meaning);
+        new_english_meaning->next = found_entry->meanings;
+        found_entry->meanings = new_english_meaning;
     } else {
         // Word does not exist, create a new entry
         entry = (DictEntry *)malloc(sizeof(DictEntry));
@@ -171,32 +193,53 @@ void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning
             exit(EXIT_FAILURE);
         }
 
-        entry->word = strdup(word);
-        Meaning *new_meaning = (Meaning *)malloc(sizeof(Meaning));
-        if (!new_meaning) {
+        entry->tamil_word = strdup(tamil_word);
+        entry->english_word = strdup(english_word);
+
+        Meaning *new_tamil_meaning = (Meaning *)malloc(sizeof(Meaning));
+        Meaning *new_english_meaning = (Meaning *)malloc(sizeof(Meaning));
+
+        if (!new_tamil_meaning || !new_english_meaning) {
             fprintf(stderr, "Memory allocation error for meaning.\n");
             exit(EXIT_FAILURE);
         }
-        new_meaning->definition = strdup(meaning);
-        new_meaning->next = NULL;
-        entry->meanings = new_meaning;
+
+        strcpy(new_tamil_meaning->tamil_definition, tamil_meaning);
+        new_tamil_meaning->next = NULL;
+        entry->meanings = new_tamil_meaning;
+
+        strcpy(new_english_meaning->english_definition, english_meaning);
+        new_english_meaning->next = NULL;
+        entry->meanings = new_english_meaning;
+
         entry->next = dict->table[index];
         dict->table[index] = entry;
     }
 }
 
-void search_and_display(Dictionary *dict, const char *word) {
-    unsigned int index = hash_function(word, TABLE_SIZE);
-    DictEntry *entry = find_entry(dict->table[index], word);
+void search_and_display(Dictionary *dict, const char *word, int lang) {
+    unsigned int index = hash_function(word);
+    DictEntry *entry = find_entry(dict->table[index], word, lang);
 
     if (entry != NULL) {
-        printf("%s:\n", entry->word);
-
-        // Display meanings
-        Meaning *meaning = entry->meanings;
-        while (meaning != NULL) {
-            printf("  - %s\n", meaning->definition);
-            meaning = meaning->next;
+        if (lang == 1) {
+            printf("Tamil: %s\n", entry->tamil_word);
+            printf("Meanings:\n");
+            // Display Tamil meanings
+            Meaning *tamil_meaning = entry->meanings;
+            while (tamil_meaning != NULL) {
+                printf("  - %s\n", tamil_meaning->tamil_definition);
+                tamil_meaning = tamil_meaning->next;
+            }
+        } else {
+            printf("English: %s\n", entry->english_word);
+            printf("Meanings:\n");
+            // Display English meanings
+            Meaning *english_meaning = entry->meanings;
+            while (english_meaning != NULL) {
+                printf("  - %s\n", english_meaning->english_definition);
+                english_meaning = english_meaning->next;
+            }
         }
     } else {
         printf("Word not found: %s\n", word);
@@ -222,13 +265,22 @@ void display(Dictionary *dict) {
     // Display sorted dictionary
     printf("Dictionary Contents (Sorted):\n");
     for (int i = 0; i < entry_count; i++) {
-        printf("%s:\n", entries[i]->word);
+        printf("Tamil: %s, English: %s\n", entries[i]->tamil_word, entries[i]->english_word);
 
-        // Display meanings
-        Meaning *meaning = entries[i]->meanings;
-        while (meaning != NULL) {
-            printf("  - %s\n", meaning->definition);
-            meaning = meaning->next;
+        // Display Tamil meanings
+        printf("Meanings in Tamil:\n");
+        Meaning *tamil_meaning = entries[i]->meanings;
+        while (tamil_meaning != NULL) {
+            printf("  - %s\n", tamil_meaning->tamil_definition);
+            tamil_meaning = tamil_meaning->next;
+        }
+
+        // Display English meanings
+        printf("Meanings in English:\n");
+        Meaning *english_meaning = entries[i]->meanings;
+        while (english_meaning != NULL) {
+            printf("  - %s\n", english_meaning->english_definition);
+            english_meaning = english_meaning->next;
         }
     }
 }
@@ -241,11 +293,11 @@ void free_dictionary(Dictionary *dict) {
             Meaning *meaning = entry->meanings;
             while (meaning != NULL) {
                 Meaning *next_meaning = meaning->next;
-                free(meaning->definition);
                 free(meaning);
                 meaning = next_meaning;
             }
-            free(entry->word);
+            free(entry->tamil_word);
+            free(entry->english_word);
             free(entry);
             entry = next_entry;
         }
@@ -260,12 +312,15 @@ void load_dataset(Dictionary *dict, const char *filename) {
         exit(EXIT_FAILURE);
     }
 
-    char word[MAX_WORD_LENGTH];
-    char meaning[MAX_MEANING_LENGTH];
+    char tamil_word[100];
+    char english_word[100];
+    char tamil_meaning[500];
+    char english_meaning[500];
 
-    while (fscanf(file, "%s %[^\n]", word, meaning) != EOF) {
-        insert_with_meaning(dict, word, meaning);
+    while (fscanf(file, "%s %s %[^\n] %[^\n]", tamil_word, english_word, tamil_meaning, english_meaning) != EOF) {
+        insert_with_meaning(dict, tamil_word, english_word, tamil_meaning, english_meaning);
     }
 
     fclose(file);
 }
+
