@@ -1,0 +1,13 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/Srinidhi_1/Desktop/dictionary-hashtables/dsa'
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _hash_function, symObjAddr: 0x0, symBinAddr: 0x100003878, symSize: 0x70 }
+  - { offsetInCU: 0xF0, offset: 0xF0, size: 0x8, addend: 0x0, symName: _hash_function, symObjAddr: 0x0, symBinAddr: 0x100003878, symSize: 0x70 }
+  - { offsetInCU: 0x126, offset: 0x126, size: 0x8, addend: 0x0, symName: _find_entry, symObjAddr: 0x70, symBinAddr: 0x1000038E8, symSize: 0x80 }
+  - { offsetInCU: 0x15C, offset: 0x15C, size: 0x8, addend: 0x0, symName: _create_dictionary, symObjAddr: 0xF0, symBinAddr: 0x100003968, symSize: 0x9C }
+  - { offsetInCU: 0x1A0, offset: 0x1A0, size: 0x8, addend: 0x0, symName: _free_dictionary, symObjAddr: 0x18C, symBinAddr: 0x100003A04, symSize: 0xF8 }
+  - { offsetInCU: 0x242, offset: 0x242, size: 0x8, addend: 0x0, symName: _insert_with_meaning, symObjAddr: 0x284, symBinAddr: 0x100003AFC, symSize: 0x1A8 }
+  - { offsetInCU: 0x2E4, offset: 0x2E4, size: 0x8, addend: 0x0, symName: _display_with_meaning, symObjAddr: 0x42C, symBinAddr: 0x100003CA4, symSize: 0xFC }
+  - { offsetInCU: 0x35C, offset: 0x35C, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x528, symBinAddr: 0x100003DA0, symSize: 0x88 }
+...
