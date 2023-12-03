@@ -5,46 +5,49 @@
 #define TABLE_SIZE 100
 
 typedef struct Meaning {
-    char tamil_definition[500];
-    char english_definition[500];
+    char definition[500];
     struct Meaning *next;
 } Meaning;
 
-typedef struct DictEntry {
-    char *tamil_word;
-    char *english_word;
+typedef struct Translation {
+    char word[100];
     Meaning *meanings;
-    struct DictEntry *next;
-} DictEntry;
+    struct Translation *next;
+} Translation;
 
 typedef struct Dictionary {
-    DictEntry *table[TABLE_SIZE];
+    Translation *table[TABLE_SIZE];
 } Dictionary;
 
 // Function prototypes
 Dictionary *create_dictionary();
 unsigned int hash_function(const char *word);
-DictEntry *find_entry(DictEntry *entry, const char *word, int lang);
-void insert_with_meaning(Dictionary *dict, const char *tamil_word, const char *english_word, const char *tamil_meaning, const char *english_meaning);
-void search_and_display(Dictionary *dict);
-void display(Dictionary *dict);
+Translation *find_translation(Translation *translation, const char *word);
+void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning, const char *language);
+void search_and_display(Dictionary *dict, const char *word, const char *language);
+void display(Dictionary *dict, int language_choice);
 void free_dictionary(Dictionary *dict);
-void load_dataset(Dictionary *dict, const char *filename);
-int compare_words(const void *a, const void *b);
+void load_dataset(Dictionary *dict, const char *filename, const char *language);
+int compare_translations(const void *a, const void *b);
+int get_language_choice();
 
 int main() {
     // Create a new dictionary
     Dictionary *dict = create_dictionary();
 
-    // Load dataset from a file
-    load_dataset(dict, "dataset.txt");
+    // Get user's language choice
+    int language_choice = get_language_choice();
+
+    // Load dataset from a file for the chosen language
+    load_dataset(dict, (language_choice == 1) ? "english_dataset.txt" : "tamil_dataset.txt", 
+                 (language_choice == 1) ? "english" : "tamil");
 
     int choice;
     char word[100];
-    int lang_choice;
 
     do {
-        printf("\nMenu:\n");
+        // Display menu based on the language choice
+        printf("\nMenu (%s):\n", (language_choice == 1) ? "English" : "Tamil");
         printf("1. Search for a word\n");
         printf("2. Add a word\n");
         printf("3. Display entire dictionary in ascending order\n");
@@ -54,56 +57,36 @@ int main() {
 
         switch (choice) {
             case 1:
-                printf("Choose language for search:\n");
-                printf("1. Tamil\n");
-                printf("2. English\n");
-                printf("Enter your choice: ");
-                scanf("%d", &lang_choice);
-
                 printf("Enter the word to search: ");
                 scanf("%s", word);
-
-                search_and_display(dict, word, lang_choice);
+                search_and_display(dict, word, (language_choice == 1) ? "english" : "tamil");
                 break;
 
             case 2: {
-                printf("Choose language for adding a word:\n");
-                printf("1. Tamil\n");
-                printf("2. English\n");
-                printf("Enter your choice: ");
-                scanf("%d", &lang_choice);
-
                 printf("Enter the word to add: ");
                 scanf("%s", word);
 
                 // Check if the word already exists
-                DictEntry *entry = find_entry(dict->table[hash_function(word)], word, lang_choice);
-                if (entry != NULL) {
+                Translation *translation = find_translation(dict->table[hash_function(word)], word);
+                if (translation != NULL) {
                     printf("Word already exists in the dictionary.\n");
                     break;
                 }
 
                 // Add new word and meaning
-                char new_tamil_meaning[500];
-                char new_english_meaning[500];
-
-                printf("Enter the meaning in Tamil: ");
+                char new_meaning[500];
+                printf("Enter the meaning for %s: ", word);
                 getchar();  // Consume the newline character left by the previous scanf
-                fgets(new_tamil_meaning, sizeof(new_tamil_meaning), stdin);
-                new_tamil_meaning[strcspn(new_tamil_meaning, "\n")] = '\0';  // Remove trailing newline
-
-                printf("Enter the meaning in English: ");
-                fgets(new_english_meaning, sizeof(new_english_meaning), stdin);
-                new_english_meaning[strcspn(new_english_meaning, "\n")] = '\0';  // Remove trailing newline
-
-                insert_with_meaning(dict, word, word, new_tamil_meaning, new_english_meaning);
+                fgets(new_meaning, sizeof(new_meaning), stdin);
+                new_meaning[strcspn(new_meaning, "\n")] = '\0';  // Remove trailing newline
+                insert_with_meaning(dict, word, new_meaning, (language_choice == 1) ? "english" : "tamil");
                 printf("Word added successfully.\n");
                 break;
             }
 
             case 3:
                 // Display entire dictionary in ascending order
-                display(dict);
+                display(dict, language_choice);
                 break;
 
             case 4:
@@ -122,9 +105,23 @@ int main() {
     return 0;
 }
 
-// Function to compare two words for sorting
-int compare_words(const void *a, const void *b) {
-    return strcmp((*(DictEntry **)a)->tamil_word, (*(DictEntry **)b)->tamil_word);
+// Function to compare two translations for sorting
+int compare_translations(const void *a, const void *b) {
+    return strcmp((*(Translation **)a)->word, (*(Translation **)b)->word);
+}
+
+// Function to get the language choice from the user
+int get_language_choice() {
+    int language_choice;
+    do {
+        printf("Select Language:\n");
+        printf("1. English\n");
+        printf("2. Tamil\n");
+        printf("Enter your choice: ");
+        scanf("%d", &language_choice);
+    } while (language_choice != 1 && language_choice != 2);
+
+    return language_choice;
 }
 
 Dictionary *create_dictionary() {
@@ -150,177 +147,133 @@ unsigned int hash_function(const char *word) {
     return hash % TABLE_SIZE;
 }
 
-DictEntry *find_entry(DictEntry *entry, const char *word, int lang) {
-    while (entry != NULL) {
-        if (lang == 1 && strcmp(entry->tamil_word, word) == 0) {
-            return entry;
-        } else if (lang == 2 && strcmp(entry->english_word, word) == 0) {
-            return entry;
+Translation *find_translation(Translation *translation, const char *word) {
+    while (translation != NULL) {
+        if (strcmp(translation->word, word) == 0) {
+            return translation;
         }
-        entry = entry->next;
+        translation = translation->next;
     }
     return NULL;
 }
 
-void insert_with_meaning(Dictionary *dict, const char *tamil_word, const char *english_word, const char *tamil_meaning, const char *english_meaning) {
-    unsigned int index = hash_function(tamil_word);
+void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning, const char *language) {
+    unsigned int index = hash_function(word);
 
-    DictEntry *entry = dict->table[index];
-    DictEntry *found_entry = find_entry(entry, tamil_word, 1);
+    Translation *translation = dict->table[index];
+    Translation *found_translation = find_translation(translation, word);
 
-    if (found_entry != NULL) {
+    if (found_translation != NULL) {
         // Word already exists, add meaning
-        Meaning *new_tamil_meaning = (Meaning *)malloc(sizeof(Meaning));
-        Meaning *new_english_meaning = (Meaning *)malloc(sizeof(Meaning));
-
-        if (!new_tamil_meaning || !new_english_meaning) {
+        Meaning *new_meaning = (Meaning *)malloc(sizeof(Meaning));
+        if (!new_meaning) {
             fprintf(stderr, "Memory allocation error for meaning.\n");
             exit(EXIT_FAILURE);
         }
-
-        strcpy(new_tamil_meaning->tamil_definition, tamil_meaning);
-        new_tamil_meaning->next = found_entry->meanings;
-        found_entry->meanings = new_tamil_meaning;
-
-        strcpy(new_english_meaning->english_definition, english_meaning);
-        new_english_meaning->next = found_entry->meanings;
-        found_entry->meanings = new_english_meaning;
+        strcpy(new_meaning->definition, meaning);
+        new_meaning->next = found_translation->meanings;
+        found_translation->meanings = new_meaning;
     } else {
-        // Word does not exist, create a new entry
-        entry = (DictEntry *)malloc(sizeof(DictEntry));
-        if (!entry) {
-            fprintf(stderr, "Memory allocation error for dictionary entry.\n");
+        // Word does not exist, create a new translation
+        translation = (Translation *)malloc(sizeof(Translation));
+        if (!translation) {
+            fprintf(stderr, "Memory allocation error for translation.\n");
             exit(EXIT_FAILURE);
         }
 
-        entry->tamil_word = strdup(tamil_word);
-        entry->english_word = strdup(english_word);
-
-        Meaning *new_tamil_meaning = (Meaning *)malloc(sizeof(Meaning));
-        Meaning *new_english_meaning = (Meaning *)malloc(sizeof(Meaning));
-
-        if (!new_tamil_meaning || !new_english_meaning) {
+        strcpy(translation->word, word);
+        Meaning *new_meaning = (Meaning *)malloc(sizeof(Meaning));
+        if (!new_meaning) {
             fprintf(stderr, "Memory allocation error for meaning.\n");
             exit(EXIT_FAILURE);
         }
-
-        strcpy(new_tamil_meaning->tamil_definition, tamil_meaning);
-        new_tamil_meaning->next = NULL;
-        entry->meanings = new_tamil_meaning;
-
-        strcpy(new_english_meaning->english_definition, english_meaning);
-        new_english_meaning->next = NULL;
-        entry->meanings = new_english_meaning;
-
-        entry->next = dict->table[index];
-        dict->table[index] = entry;
+        strcpy(new_meaning->definition, meaning);
+        new_meaning->next = NULL;
+        translation->meanings = new_meaning;
+        translation->next = dict->table[index];
+        dict->table[index] = translation;
     }
 }
 
-void search_and_display(Dictionary *dict, const char *word, int lang) {
+void search_and_display(Dictionary *dict, const char *word, const char *language) {
     unsigned int index = hash_function(word);
-    DictEntry *entry = find_entry(dict->table[index], word, lang);
+    Translation *translation = find_translation(dict->table[index], word);
 
-    if (entry != NULL) {
-        if (lang == 1) {
-            printf("Tamil: %s\n", entry->tamil_word);
-            printf("Meanings:\n");
-            // Display Tamil meanings
-            Meaning *tamil_meaning = entry->meanings;
-            while (tamil_meaning != NULL) {
-                printf("  - %s\n", tamil_meaning->tamil_definition);
-                tamil_meaning = tamil_meaning->next;
-            }
-        } else {
-            printf("English: %s\n", entry->english_word);
-            printf("Meanings:\n");
-            // Display English meanings
-            Meaning *english_meaning = entry->meanings;
-            while (english_meaning != NULL) {
-                printf("  - %s\n", english_meaning->english_definition);
-                english_meaning = english_meaning->next;
-            }
+    if (translation != NULL) {
+        printf("%s (%s):\n", translation->word, language);
+
+        // Display meanings
+        Meaning *meaning = translation->meanings;
+        while (meaning != NULL) {
+            printf("  - %s\n", meaning->definition);
+            meaning = meaning->next;
         }
     } else {
         printf("Word not found: %s\n", word);
     }
 }
 
-void display(Dictionary *dict) {
-    // Collect all entries for sorting
-    DictEntry *entries[TABLE_SIZE * 10];  // Assuming a maximum of 10 entries per hash table slot
-    int entry_count = 0;
+void display(Dictionary *dict, int language_choice) {
+    // Collect all translations for sorting
+    Translation *translations[TABLE_SIZE * 10];  // Assuming a maximum of 10 translations per hash table slot
+    int translation_count = 0;
 
     for (int i = 0; i < TABLE_SIZE; i++) {
-        DictEntry *entry = dict->table[i];
-        while (entry != NULL) {
-            entries[entry_count++] = entry;
-            entry = entry->next;
+        Translation *translation = dict->table[i];
+        while (translation != NULL) {
+            translations[translation_count++] = translation;
+            translation = translation->next;
         }
     }
 
-    // Sort the entries
-    qsort(entries, entry_count, sizeof(DictEntry *), compare_words);
+    // Sort the translations
+    qsort(translations, translation_count, sizeof(Translation *), compare_translations);
 
     // Display sorted dictionary
     printf("Dictionary Contents (Sorted):\n");
-    for (int i = 0; i < entry_count; i++) {
-        printf("Tamil: %s, English: %s\n", entries[i]->tamil_word, entries[i]->english_word);
+    for (int i = 0; i < translation_count; i++) {
+        printf("%s (%s):\n", translations[i]->word, (language_choice == 1) ? "english" : "tamil");
 
-        // Display Tamil meanings
-        printf("Meanings in Tamil:\n");
-        Meaning *tamil_meaning = entries[i]->meanings;
-        while (tamil_meaning != NULL) {
-            printf("  - %s\n", tamil_meaning->tamil_definition);
-            tamil_meaning = tamil_meaning->next;
-        }
-
-        // Display English meanings
-        printf("Meanings in English:\n");
-        Meaning *english_meaning = entries[i]->meanings;
-        while (english_meaning != NULL) {
-            printf("  - %s\n", english_meaning->english_definition);
-            english_meaning = english_meaning->next;
+        // Display meanings
+        Meaning *meaning = translations[i]->meanings;
+        while (meaning != NULL) {
+            printf("  - %s\n", meaning->definition);
+            meaning = meaning->next;
         }
     }
 }
 
 void free_dictionary(Dictionary *dict) {
     for (int i = 0; i < TABLE_SIZE; i++) {
-        DictEntry *entry = dict->table[i];
-        while (entry != NULL) {
-            DictEntry *next_entry = entry->next;
-            Meaning *meaning = entry->meanings;
+        Translation *translation = dict->table[i];
+        while (translation != NULL) {
+            Translation *next_translation = translation->next;
+            Meaning *meaning = translation->meanings;
             while (meaning != NULL) {
                 Meaning *next_meaning = meaning->next;
                 free(meaning);
                 meaning = next_meaning;
             }
-            free(entry->tamil_word);
-            free(entry->english_word);
-            free(entry);
-            entry = next_entry;
+            free(translation);
+            translation = next_translation;
         }
     }
     free(dict);
 }
 
-void load_dataset(Dictionary *dict, const char *filename) {
+void load_dataset(Dictionary *dict, const char *filename, const char *language) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         fprintf(stderr, "Unable to open file: %s\n", filename);
         exit(EXIT_FAILURE);
     }
 
-    char tamil_word[100];
-    char english_word[100];
-    char tamil_meaning[500];
-    char english_meaning[500];
+    char word[100];
+    char meaning[500];
 
-    while (fscanf(file, "%s %s %[^\n] %[^\n]", tamil_word, english_word, tamil_meaning, english_meaning) != EOF) {
-        insert_with_meaning(dict, tamil_word, english_word, tamil_meaning, english_meaning);
+    while (fscanf(file, "%s %[^\n]", word, meaning) != EOF) {
+        insert_with_meaning(dict, word, meaning, language);
     }
 
     fclose(file);
 }
-
