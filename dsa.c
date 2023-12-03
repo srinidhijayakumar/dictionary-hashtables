@@ -109,6 +109,24 @@ void display(Dictionary *dict) {
     }
 }
 
+void search_and_display(Dictionary *dict, const char *word) {
+    unsigned int index = hash_function(word);
+    DictEntry *entry = find_entry(dict->table[index], word);
+
+    if (entry != NULL) {
+        printf("%s:\n", entry->word);
+
+        // Display meanings
+        Meaning *meaning = entry->meanings;
+        while (meaning != NULL) {
+            printf("  - %s\n", meaning->definition);
+            meaning = meaning->next;
+        }
+    } else {
+        printf("Word not found: %s\n", word);
+    }
+}
+
 void free_dictionary(Dictionary *dict) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         DictEntry *entry = dict->table[i];
@@ -155,6 +173,13 @@ int main() {
 
     // Display the dictionary
     display(dict);
+
+    // Search for a word
+    char search_word[100];
+    printf("Enter a word to search: ");
+    scanf("%s", search_word);
+
+    search_and_display(dict, search_word);
 
     // Free dictionary
     free_dictionary(dict);
