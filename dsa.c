@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define TABLE_SIZE 100
 
@@ -30,7 +31,6 @@ void free_dictionary(Dictionary *dict);
 void load_dataset(Dictionary *dict, const char *filename, const char *language);
 int compare_translations(const void *a, const void *b);
 int get_language_choice();
-int is_typing_in_chosen_language(const char *word, const char *language);
 
 int main() {
     // Create a new dictionary
@@ -60,39 +60,31 @@ int main() {
             case 1:
                 printf("Enter the word to search: ");
                 scanf("%s", word);
-                if (is_typing_in_chosen_language(word, (language_choice == 1) ? "english" : "tamil")) {
-                    search_and_display(dict, word, (language_choice == 1) ? "english" : "tamil");
-                } else {
-                    printf("You are typing in the wrong language. Please type in %s.\n",
-                           (language_choice == 1) ? "English" : "Tamil");
-                }
+                search_and_display(dict, word, (language_choice == 1) ? "english" : "tamil");
                 break;
-
+            
             case 2: {
                 printf("Enter the word to add: ");
                 scanf("%s", word);
-                if (is_typing_in_chosen_language(word, (language_choice == 1) ? "english" : "tamil")) {
-                    // Check if the word already exists
-                    Translation *translation = find_translation(dict->table[hash_function(word)], word);
-                    if (translation != NULL) {
-                        printf("Word already exists in the dictionary.\n");
-                        break;
-                    }
 
-                    // Add new word and meaning
-                    char new_meaning[500];
-                    printf("Enter the meaning for %s: ", word);
-                    getchar();  // Consume the newline character left by the previous scanf
-                    fgets(new_meaning, sizeof(new_meaning), stdin);
-                    new_meaning[strcspn(new_meaning, "\n")] = '\0';  // Remove trailing newline
-                    insert_with_meaning(dict, word, new_meaning, (language_choice == 1) ? "english" : "tamil");
-                    printf("Word added successfully.\n");
-                } else {
-                    printf("You are typing in the wrong language. Please type in %s.\n",
-                           (language_choice == 1) ? "English" : "Tamil");
+                // Check if the word already exists
+                Translation *translation = find_translation(dict->table[hash_function(word)], word);
+                if (translation != NULL) {
+                    printf("Word already exists in the dictionary.\n");
+                    break;
                 }
+
+                // Add new word and meaning
+                char new_meaning[500];
+                printf("Enter the meaning for %s: ", word);
+                getchar();  // Consume the newline character left by the previous scanf
+                fgets(new_meaning, sizeof(new_meaning), stdin);
+                new_meaning[strcspn(new_meaning, "\n")] = '\0';  // Remove trailing newline
+                insert_with_meaning(dict, word, new_meaning, (language_choice == 1) ? "english" : "tamil");
+                printf("Word added successfully.\n");
                 break;
             }
+
 
             case 3:
                 // Display entire dictionary in ascending order
@@ -219,9 +211,10 @@ void search_and_display(Dictionary *dict, const char *word, const char *language
             meaning = meaning->next;
         }
     } else {
-        printf("Word not found: %s\n", word);
+        printf("Word not found in dictionary: %s (%s)\n", word, language);
     }
 }
+
 
 void display(Dictionary *dict, int language_choice) {
     // Collect all translations for sorting
@@ -288,7 +281,3 @@ void load_dataset(Dictionary *dict, const char *filename, const char *language) 
     fclose(file);
 }
 
-int is_typing_in_chosen_language(const char *word, const char *language) {
-    // Check if the entered word is in the chosen language
-    return (strstr(word, language) != NULL);
-}
