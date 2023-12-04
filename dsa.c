@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #define TABLE_SIZE 100
 
@@ -18,6 +17,7 @@ typedef struct Translation {
 
 typedef struct Dictionary {
     Translation *table[TABLE_SIZE];
+    int size;  // Track the number of entries for dynamic resizing
 } Dictionary;
 
 // Function prototypes
@@ -62,7 +62,7 @@ int main() {
                 scanf("%s", word);
                 search_and_display(dict, word, (language_choice == 1) ? "english" : "tamil");
                 break;
-            
+
             case 2: {
                 printf("Enter the word to add: ");
                 scanf("%s", word);
@@ -84,7 +84,6 @@ int main() {
                 printf("Word added successfully.\n");
                 break;
             }
-
 
             case 3:
                 // Display entire dictionary in ascending order
@@ -136,6 +135,8 @@ Dictionary *create_dictionary() {
     for (int i = 0; i < TABLE_SIZE; i++) {
         dict->table[i] = NULL;
     }
+
+    dict->size = 0;  // Initialize the size to 0
 
     return dict;
 }
@@ -194,6 +195,28 @@ void insert_with_meaning(Dictionary *dict, const char *word, const char *meaning
         translation->meanings = new_meaning;
         translation->next = dict->table[index];
         dict->table[index] = translation;
+
+        // Increment the size of the dictionary
+        dict->size++;
+
+        // Check if resizing is needed (you can adjust the threshold as needed)
+        if (dict->size > TABLE_SIZE * 0.7) {
+            // Perform resizing by creating a new dictionary and rehashing the entries
+            Dictionary *new_dict = create_dictionary();
+            for (int i = 0; i < TABLE_SIZE; i++) {
+                Translation *old_translation = dict->table[i];
+                while (old_translation != NULL) {
+                    Translation *next_translation = old_translation->next;
+                    insert_with_meaning(new_dict, old_translation->word,
+                                         old_translation->meanings->definition, language);
+                    free(old_translation);
+                    old_translation = next_translation;
+                }
+            }
+            // Copy the new dictionary back to the original one
+            memcpy(dict, new_dict, sizeof(Dictionary));
+            free(new_dict);
+        }
     }
 }
 
@@ -214,7 +237,6 @@ void search_and_display(Dictionary *dict, const char *word, const char *language
         printf("Word not found in dictionary: %s (%s)\n", word, language);
     }
 }
-
 
 void display(Dictionary *dict, int language_choice) {
     // Collect all translations for sorting
@@ -280,4 +302,3 @@ void load_dataset(Dictionary *dict, const char *filename, const char *language) 
 
     fclose(file);
 }
-
